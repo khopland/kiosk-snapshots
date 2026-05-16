@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Screenshot Pi Admin</title>
+    <style>
+      :root {
+        --bg: #eef1eb;
+        --panel: rgba(254, 253, 249, 0.92);
+        --ink: #112117;
+        --muted: #5b6b61;
+        --line: rgba(17, 33, 23, 0.12);
+        --accent: #d45e2f;
+        --accent-2: #294f3b;
+        --danger: #a12d2f;
+        --shadow: 0 20px 60px rgba(25, 42, 31, 0.12);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Georgia, "Times New Roman", serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(212, 94, 47, 0.18), transparent 30%),
+          linear-gradient(135deg, #f7f4ed, var(--bg));
+      }
+      .shell {
+        display: grid;
+        grid-template-columns: 360px 1fr;
+        min-height: 100vh;
+      }
+      .sidebar, .content {
+        padding: 28px;
+      }
+      .sidebar {
+        border-right: 1px solid var(--line);
+        background: rgba(255,255,255,0.45);
+        backdrop-filter: blur(14px);
+      }
+      .title {
+        margin: 0 0 8px;
+        font-size: 2.4rem;
+        line-height: 0.92;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .lede, .hint, .meta {
+        color: var(--muted);
+      }
+      .lede {
+        margin: 0 0 24px;
+        max-width: 28ch;
+      }
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+      }
+      .form {
+        padding: 18px;
+        display: grid;
+        gap: 12px;
+      }
+      label {
+        display: grid;
+        gap: 6px;
+        font-size: 0.95rem;
+      }
+      input, textarea, button, select {
+        font: inherit;
+      }
+      input[type="text"], input[type="number"], input[type="url"], select {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--line);
+        background: rgba(255,255,255,0.75);
+      }
+      .inline {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .checkbox {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 12px 16px;
+        cursor: pointer;
+        transition: transform 120ms ease, opacity 120ms ease;
+      }
+      button:hover { transform: translateY(-1px); }
+      .primary {
+        background: var(--accent);
+        color: #fffaf1;
+      }
+      .secondary {
+        background: var(--accent-2);
+        color: white;
+      }
+      .danger {
+        background: var(--danger);
+        color: white;
+      }
+      .ghost {
+        background: rgba(17, 33, 23, 0.08);
+      }
+      .content {
+        display: grid;
+        gap: 20px;
+      }
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: end;
+        gap: 16px;
+      }
+      .cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 18px;
+      }
+      .card {
+        overflow: hidden;
+      }
+      .card-head {
+        padding: 18px 18px 10px;
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .card-body {
+        padding: 0 18px 18px;
+      }
+      .status {
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .status.success { color: #2f6b4c; }
+      .status.failed { color: var(--danger); }
+      .status.never-run { color: var(--muted); }
+      .thumb {
+        aspect-ratio: 16 / 9;
+        background: linear-gradient(135deg, rgba(17,33,23,0.08), rgba(17,33,23,0.02));
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid var(--line);
+        display: grid;
+        place-items: center;
+        margin-bottom: 14px;
+      }
+      .thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .stats {
+        display: grid;
+        gap: 6px;
+        font-size: 0.92rem;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 16px;
+      }
+      .error {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 14px;
+        background: rgba(161,45,47,0.08);
+        color: #7f1e22;
+      }
+      @media (max-width: 980px) {
+        .shell { grid-template-columns: 1fr; }
+        .sidebar { border-right: none; border-bottom: 1px solid var(--line); }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <aside class="sidebar">
+        <h1 class="title">Screenshot<br>Pi</h1>
+        <p class="lede">Trusted-LAN capture appliance for dashboards, SPAs, and TV display walls.</p>
+        <div class="panel">
+          <form id="screen-form" class="form">
+            <input type="hidden" name="screen_id" value="">
+            <label>Name<input name="name" type="text" placeholder="Office Dashboard" required></label>
+            <label>URL<input name="url" type="url" placeholder="https://example.local/app" required></label>
+            <div class="inline">
+              <label>Interval seconds<input name="interval_seconds" type="number" min="1" value="300" required></label>
+              <label>Settle delay ms<input name="settle_delay_ms" type="number" min="0" value="8000" required></label>
+            </div>
+            <div class="inline">
+              <label>Timeout ms<input name="navigation_timeout_ms" type="number" min="1" value="30000" required></label>
+            </div>
+            <div class="inline">
+              <label>Viewport width<input name="viewport_width" type="number" min="1" value="1920" required></label>
+              <label>Viewport height<input name="viewport_height" type="number" min="1" value="1080" required></label>
+            </div>
+            <div class="inline">
+              <label>Zoom factor<input name="zoom_factor" type="number" min="0.1" max="5" step="0.1" value="1.0" required></label>
+              <label>Post-scroll delay ms<input name="post_scroll_delay_ms" type="number" min="0" value="500" required></label>
+            </div>
+            <div class="inline">
+              <label>Scroll anchor
+                <select name="scroll_anchor">
+                  <option value="custom">Custom</option>
+                  <option value="top">Top</option>
+                  <option value="middle">Middle</option>
+                  <option value="bottom">Bottom</option>
+                </select>
+              </label>
+            </div>
+            <div class="inline">
+              <label>Scroll X<input name="scroll_x" type="number" value="0" required></label>
+              <label>Scroll Y<input name="scroll_y" type="number" value="0" required></label>
+            </div>
+            <label class="checkbox"><input name="enabled" type="checkbox" checked> Enabled</label>
+            <div class="actions">
+              <button class="primary" type="submit">Save Screen</button>
+              <button class="ghost" type="button" id="reset-form">Reset</button>
+            </div>
+          </form>
+        </div>
+        <p class="hint">History retention: {{ retention_days }} days. TV mode lives at <strong>/display</strong>. Rotation: {{ display_rotation_ms }} ms.</p>
+      </aside>
+      <main class="content">
+        <div class="topbar">
+          <div>
+            <h2 class="title" style="font-size:1.5rem; margin-bottom:6px;">Configured Screens</h2>
+            <p class="meta">Run captures manually, inspect status, and update timing without leaving the Pi appliance.</p>
+          </div>
+          <button class="secondary" type="button" onclick="window.open('/display', '_blank')">Open Display</button>
+        </div>
+        <section class="cards">
+          {% for screen in screens %}
+          <article class="panel card" data-screen='{{ screen|json|safe }}'>
+            <div class="card-head">
+              <div>
+                <div class="status {{ screen.last_status }}">{{ screen.last_status }}</div>
+                <h3 style="margin:8px 0 4px;">{{ screen.name }}</h3>
+                <div class="meta">{{ screen.url }}</div>
+              </div>
+              <div class="meta">{{ screen.viewport_width }}×{{ screen.viewport_height }}</div>
+            </div>
+            <div class="card-body">
+              <div class="thumb">
+                {% match screen.latest_image_url %}
+                  {% when Some with (image_url) %}
+                    <img src="{{ image_url }}" alt="Latest screenshot for {{ screen.name }}">
+                  {% when None %}
+                    <span class="meta">No capture yet</span>
+                {% endmatch %}
+              </div>
+              <div class="stats">
+                <div><strong>Next:</strong> {{ screen.next_capture_at }}</div>
+                <div><strong>Last:</strong> {% match screen.last_capture_at %}{% when Some with (last) %}{{ last }}{% when None %}Never{% endmatch %}</div>
+                <div><strong>Interval:</strong> {{ screen.interval_seconds }}s</div>
+                <div><strong>Settle:</strong> {{ screen.settle_delay_ms }}ms</div>
+                <div><strong>Zoom:</strong> {{ screen.zoom_factor }}x</div>
+                <div><strong>Anchor:</strong> {{ screen.scroll_anchor }}</div>
+                <div><strong>Scroll:</strong> {{ screen.scroll_x }}, {{ screen.scroll_y }}</div>
+              </div>
+              {% match screen.last_error %}
+                {% when Some with (error) %}
+                  <div class="error">{{ error }}</div>
+                {% when None %}
+              {% endmatch %}
+              <div class="actions">
+                <button class="secondary" type="button" onclick="runScreen('{{ screen.id }}')">Run Now</button>
+                <button class="ghost" type="button" onclick="editScreen(this)">Edit</button>
+                <button class="danger" type="button" onclick="deleteScreen('{{ screen.id }}')">Delete</button>
+                <button class="ghost" type="button" onclick="showCaptures('{{ screen.id }}')">History</button>
+              </div>
+            </div>
+          </article>
+          {% endfor %}
+        </section>
+      </main>
+    </div>
+    <script>
+      const form = document.getElementById('screen-form');
+      const resetButton = document.getElementById('reset-form');
+
+      function populateForm(screen) {
+        form.screen_id.value = screen.id;
+        form.name.value = screen.name;
+        form.url.value = screen.url;
+        form.interval_seconds.value = screen.interval_seconds;
+        form.settle_delay_ms.value = screen.settle_delay_ms;
+        form.navigation_timeout_ms.value = screen.navigation_timeout_ms;
+        form.viewport_width.value = screen.viewport_width;
+        form.viewport_height.value = screen.viewport_height;
+        form.zoom_factor.value = screen.zoom_factor;
+        form.scroll_anchor.value = screen.scroll_anchor;
+        form.scroll_x.value = screen.scroll_x;
+        form.scroll_y.value = screen.scroll_y;
+        form.post_scroll_delay_ms.value = screen.post_scroll_delay_ms;
+        form.enabled.checked = screen.enabled;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function editScreen(button) {
+        const card = button.closest('[data-screen]');
+        populateForm(JSON.parse(card.dataset.screen));
+      }
+
+      resetButton.addEventListener('click', () => {
+        form.reset();
+        form.screen_id.value = '';
+        form.interval_seconds.value = 300;
+        form.settle_delay_ms.value = 8000;
+        form.navigation_timeout_ms.value = 30000;
+        form.viewport_width.value = 1920;
+        form.viewport_height.value = 1080;
+        form.zoom_factor.value = 1.0;
+        form.scroll_anchor.value = 'custom';
+        form.scroll_x.value = 0;
+        form.scroll_y.value = 0;
+        form.post_scroll_delay_ms.value = 500;
+        form.enabled.checked = true;
+      });
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        const payload = {
+          name: form.name.value.trim(),
+          url: form.url.value.trim(),
+          enabled: form.enabled.checked,
+          interval_seconds: Number(form.interval_seconds.value),
+          settle_delay_ms: Number(form.settle_delay_ms.value),
+          navigation_timeout_ms: Number(form.navigation_timeout_ms.value),
+          viewport_width: Number(form.viewport_width.value),
+          viewport_height: Number(form.viewport_height.value),
+          zoom_factor: Number(form.zoom_factor.value),
+          scroll_anchor: form.scroll_anchor.value,
+          scroll_x: Number(form.scroll_x.value),
+          scroll_y: Number(form.scroll_y.value),
+          post_scroll_delay_ms: Number(form.post_scroll_delay_ms.value),
+        };
+        const screenId = form.screen_id.value;
+        const response = await fetch(screenId ? `/api/screens/${screenId}` : '/api/screens', {
+          method: screenId ? 'PATCH' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ error: 'Request failed' }));
+          alert(error.error || 'Request failed');
+          return;
+        }
+        location.reload();
+      });
+
+      async function runScreen(id) {
+        const response = await fetch(`/api/screens/${id}/run`, { method: 'POST' });
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ error: 'Run failed' }));
+          alert(error.error || 'Run failed');
+          return;
+        }
+        location.reload();
+      }
+
+      async function deleteScreen(id) {
+        if (!confirm('Delete this screen and its capture history?')) return;
+        const response = await fetch(`/api/screens/${id}`, { method: 'DELETE' });
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ error: 'Delete failed' }));
+          alert(error.error || 'Delete failed');
+          return;
+        }
+        location.reload();
+      }
+
+      async function showCaptures(id) {
+        const response = await fetch(`/api/screens/${id}/captures`);
+        if (!response.ok) {
+          alert('Could not load capture history');
+          return;
+        }
+        const captures = await response.json();
+        const lines = captures.map(c => `${c.captured_at} | ${c.status} | ${c.file_path || c.error_message || 'no file'}`);
+        alert(lines.slice(0, 20).join('\n') || 'No captures yet');
+      }
+    </script>
+  </body>
+  </html>

@@ -1,0 +1,12 @@
+services:
+  screenshot-pi:
+    build: ..
+    ports:
+      - "3000:3000"
+    environment:
+      APP_BIND: 0.0.0.0:3000
+      APP_DATA_DIR: /data
+      RUST_LOG: info
+    volumes:
+      - ./data/db:/data/db
+      - ./data/captures:/data/captures

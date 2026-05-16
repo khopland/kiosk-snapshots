@@ -1,0 +1,21 @@
+[Unit]
+Description=Screenshot Pi TV Kiosk Browser
+After=graphical.target docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+User=pi
+Environment=DISPLAY=:0
+Environment=XAUTHORITY=/home/pi/.Xauthority
+ExecStart=/usr/bin/chromium \
+  --kiosk \
+  --start-fullscreen \
+  --noerrdialogs \
+  --disable-session-crashed-bubble \
+  --check-for-update-interval=31536000 \
+  http://127.0.0.1:3000/display
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=graphical.target

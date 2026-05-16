@@ -1,0 +1,27 @@
+[package]
+name = "screenshot-pi"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0"
+askama = { version = "0.16", features = ["serde_json"] }
+axum = { version = "0.8.9", features = ["macros"] }
+chrono = { version = "0.4", features = ["serde"] }
+chromiumoxide = "0.9.1"
+futures-util = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sqlx = { version = "0.8.6", features = ["runtime-tokio-rustls", "sqlite", "chrono", "uuid", "macros", "migrate"] }
+thiserror = "2.0"
+tokio = { version = "1", features = ["full"] }
+tower-http = { version = "0.6.10", features = ["cors", "fs"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+url = "2.5"
+uuid = { version = "1.18", features = ["serde", "v4", "v7"] }
+
+[dev-dependencies]
+image = { version = "0.25", default-features = false, features = ["png"] }
+serial_test = "3.2"
+tempfile = "3.23"

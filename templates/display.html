@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta http-equiv="refresh" content="45">
+    <title>Screenshot Pi Display</title>
+    <style>
+      :root {
+        --bg: #000;
+        --ink: #f2f2f2;
+        --muted: rgba(242, 242, 242, 0.72);
+        --image-max-height: 88vh;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--bg);
+        color: var(--ink);
+        font-family: sans-serif;
+      }
+      body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+      }
+      .stage {
+        width: 100vw;
+        height: 100vh;
+        position: relative;
+      }
+      .slide {
+        display: none;
+        position: absolute;
+        inset: 0;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px;
+      }
+      .slide.active {
+        display: flex;
+      }
+      .backdrop {
+        position: absolute;
+        inset: 0;
+        overflow: hidden;
+      }
+      .backdrop img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: blur(22px) brightness(0.45);
+        transform: scale(1.08);
+      }
+      .backdrop::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.38);
+      }
+      .image-wrap {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .image-wrap img {
+        display: block;
+        max-width: min(100%, 96vw);
+        max-height: var(--image-max-height);
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        object-position: top center;
+      }
+      .caption {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        text-align: center;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+      .empty {
+        text-align: center;
+        color: var(--muted);
+        font-size: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="stage">
+      {% if screens.len() > 0 %}
+        {% for screen in screens %}
+        <section class="slide{% if loop.first %} active{% endif %}" data-slide>
+          {% match screen.latest_image_url %}
+            {% when Some with (image_url) %}
+              <div class="backdrop" aria-hidden="true">
+                <img src="{{ image_url }}" alt="">
+              </div>
+              <div class="image-wrap">
+                <img src="{{ image_url }}" alt="Latest screenshot for {{ screen.name }}">
+              </div>
+            {% when None %}
+              <div class="image-wrap">
+                <div class="empty">Waiting for first capture</div>
+              </div>
+          {% endmatch %}
+          <div class="caption">{{ screen.name }}</div>
+        </section>
+        {% endfor %}
+      {% else %}
+        <div class="empty">No enabled screens configured.</div>
+      {% endif %}
+    </main>
+    <script>
+      const slides = Array.from(document.querySelectorAll('[data-slide]'));
+      const rotationMs = {{ rotation_ms }};
+      let index = 0;
+
+      function showSlide(nextIndex) {
+        slides.forEach((slide, currentIndex) => {
+          slide.classList.toggle('active', currentIndex === nextIndex);
+        });
+      }
+
+      if (slides.length > 1) {
+        window.setInterval(() => {
+          index = (index + 1) % slides.length;
+          showSlide(index);
+        }, rotationMs);
+      }
+    </script>
+  </body>
+  </html>
